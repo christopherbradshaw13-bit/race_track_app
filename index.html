@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Event Hub — Live Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c26;
+  --border: #2a2a3a;
+  --text: #e8e8f0;
+  --muted: #6b6b88;
+  --accent-dallas: #e63946;
+  --accent-phoenix: #f4a261;
+  --accent-chicago: #2a9d8f;
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --bronze: #cd7f32;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --current-accent: var(--accent-dallas);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* LOCATION SELECTOR SCREEN */
+#location-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.home-hero {
+  background: linear-gradient(160deg, #0d0d18 0%, #0a0a0f 60%);
+  padding: 48px 24px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.home-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(230,57,70,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.home-hero .flag {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.home-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 8vw, 56px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #fff;
+}
+.home-title span { color: var(--accent-dallas); }
+.home-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.location-list {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.loc-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s, background 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+.loc-card:active { transform: scale(0.98); }
+.loc-card:hover { background: var(--surface2); }
+.loc-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px currentColor;
+}
+.loc-info { flex: 1; min-width: 0; }
+.loc-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+.loc-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.loc-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.badge-live { background: rgba(230,57,70,0.2); color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
+.badge-upcoming { background: rgba(107,107,136,0.2); color: var(--muted); border: 1px solid var(--border); }
+
+/* MAIN APP */
+#app-screen { display: none; flex-direction: column; height: 100vh; height: 100dvh; }
+
+/* LOCATION HEADER */
+.loc-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+.loc-banner {
+  padding: 10px 16px 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.loc-banner-back {
+  background: rgba(0,0,0,0.25);
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.loc-banner-info { flex: 1; min-width: 0; }
+.loc-banner-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: #fff;
+}
+.loc-banner-sub { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.loc-banner-viewing {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  padding: 2px 8px 6px;
+}
+
+.nav-tabs {
+  display: flex;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  border: none;
+  background: transparent;
+  min-height: 48px;
+  gap: 3px;
+}
+.nav-tab .tab-icon { font-size: 16px; }
+.nav-tab.active {
+  color: #fff;
+  background: rgba(0,0,0,0.25);
+  border-bottom: 2px solid #fff;
+}
+
+/* PAGE CONTENT */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* ACTIVITY TABS */
+.activity-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+  scrollbar-width: none;
+}
+.activity-tabs::-webkit-scrollbar { display: none; }
+.act-tab {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+.act-tab.active {
+  color: #fff;
+  border-color: transparent;
+}
+
+/* LEADERBOARD ENTRIES */
+.lb-entry {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+  animation: slideIn 0.3s ease both;
+}
+@keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.lb-entry.rank-1 { border-color: rgba(255,215,0,0.4); background: linear-gradient(135deg, rgba(255,215,0,0.06), var(--surface)); }
+.lb-entry.rank-2 { border-color: rgba(192,192,192,0.3); background: linear-gradient(135deg, rgba(192,192,192,0.04), var(--surface)); }
+.lb-entry.rank-3 { border-color: rgba(205,127,50,0.3); background: linear-gradient(135deg, rgba(205,127,50,0.04), var(--surface)); }
+
+.lb-rank {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.lb-rank.r1 { color: var(--gold); }
+.lb-rank.r2 { color: var(--silver); }
+.lb-rank.r3 { color: var(--bronze); }
+
+.lb-team { flex: 1; min-width: 0; }
+.lb-team-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-team-detail { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
+
+.lb-points {
+  text-align: right;
+  flex-shrink: 0;
+}
+.lb-points-val {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.lb-points-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.hidden-banner {
+  background: var(--surface);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+}
+.hidden-banner .lock { font-size: 48px; margin-bottom: 12px; }
+.hidden-banner h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.hidden-banner p { color: var(--muted); font-size: 13px; }
+.reveal-btn {
+  margin-top: 20px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.reveal-btn:active { transform: scale(0.97); }
+
+/* SCHEDULE */
+.schedule-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  animation: slideIn 0.3s ease both;
+}
+.sched-time {
+  flex-shrink: 0;
+  width: 58px;
+  text-align: right;
+  padding-top: 2px;
+}
+.sched-time-main { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text); }
+.sched-time-end { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.sched-line {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+}
+.sched-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sched-connector { width: 2px; flex: 1; background: var(--border); margin-top: 3px; min-height: 20px; }
+.sched-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 0;
+  transition: border-color 0.15s;
+}
+.sched-card.now { border-width: 2px; }
+.sched-card-title { font-weight: 600; font-size: 14px; line-height: 1.3; }
+.sched-card-cat { font-size: 11px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+.sched-card-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+.now-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+/* DOWNLOADS */
+.doc-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  animation: slideIn 0.3s ease both;
+}
+.doc-card:active { transform: scale(0.98); }
+.doc-card:hover { background: var(--surface2); }
+.doc-icon { font-size: 32px; flex-shrink: 0; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-title { font-weight: 600; font-size: 14px; line-height: 1.3; }
+.doc-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.doc-meta { display: flex; gap: 8px; margin-top: 5px; align-items: center; }
+.doc-tag {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.doc-arrow { color: var(--muted); flex-shrink: 0; font-size: 18px; }
+.doc-downloaded { color: #2a9d8f !important; }
+
+/* ORGANIZER PANEL */
+.organizer-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 2px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px 32px;
+  max-height: 85vh;
+  overflow-y: auto;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.organizer-panel.open { transform: translateY(0); }
+.organizer-panel-handle {
+  width: 40px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+.field-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+.field-group { margin-bottom: 18px; }
+.select-input, .number-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: var(--font-body);
+  appearance: none;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.select-input:focus, .number-input:focus { border-color: var(--current-accent); }
+.number-input { font-family: var(--font-mono); font-size: 22px; text-align: center; }
+.status-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.status-btn {
+  padding: 10px 4px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.status-btn.active-ok { background: rgba(42,157,143,0.2); border-color: #2a9d8f; color: #2a9d8f; }
+.status-btn.active-dnf { background: rgba(244,162,97,0.2); border-color: #f4a261; color: #f4a261; }
+.status-btn.active-dsq { background: rgba(230,57,70,0.2); border-color: #e63946; color: #e63946; }
+.status-btn.active-inc { background: rgba(107,107,136,0.2); border-color: var(--muted); color: var(--muted); }
+.penalty-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.penalty-label { flex: 1; font-size: 13px; }
+.penalty-adj { font-size: 11px; color: var(--muted); }
+.counter-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s, transform 0.1s;
+  flex-shrink: 0;
+}
+.counter-btn:active { transform: scale(0.9); background: var(--border); }
+.counter-val { font-family: var(--font-mono); font-size: 18px; font-weight: 600; width: 28px; text-align: center; }
+.save-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 8px;
+}
+.save-btn:active { transform: scale(0.98); opacity: 0.9; }
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 199;
+  display: none;
+  backdrop-filter: blur(2px);
+}
+.overlay.show { display: block; }
+
+/* ORG TRIGGER */
+.org-fab {
+  position: fixed;
+  bottom: 24px; right: 16px;
+  padding: 10px 18px;
+  border-radius: 24px;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  z-index: 150;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: transform 0.1s, opacity 0.15s;
+}
+.org-fab:active { transform: scale(0.96); }
+.org-fab.visible { display: flex; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  top: 16px; left: 50%; transform: translateX(-50%) translateY(-80px);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  pointer-events: none;
+  opacity: 0;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* OFFLINE BANNER */
+.offline-bar {
+  background: rgba(244,162,97,0.1);
+  border-bottom: 1px solid rgba(244,162,97,0.3);
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f4a261;
+  display: none;
+}
+.offline-bar.show { display: block; }
+
+/* ROLE SWITCHER (demo only) */
+.role-bar {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.role-btn {
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.role-btn.active { background: var(--surface2); color: var(--text); border-color: var(--muted); }
+
+.section-header {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ORGANIZER SCHEDULE CONTROLS */
+.sched-org-actions {
+  display: none;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.sched-org-actions.visible { display: flex; }
+.sched-action-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 4px;
+}
+.sched-action-btn:hover { color: var(--text); border-color: var(--muted); }
+.sched-action-btn.danger:hover { color: #e63946; border-color: #e63946; background: rgba(230,57,70,0.1); }
+.org-add-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 4px;
+  display: none;
+}
+.org-add-btn.visible { display: block; }
+.org-add-btn:hover { border-color: var(--current-accent); color: var(--text); background: var(--surface); }
+
+/* TEXT INPUT */
+.text-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+  resize: none;
+}
+.text-input:focus { border-color: var(--current-accent); }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* UPLOAD DROP ZONE */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  display: none;
+}
+.upload-zone.visible { display: block; }
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--current-accent);
+  background: rgba(255,255,255,0.02);
+}
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-icon { font-size: 36px; margin-bottom: 8px; }
+.upload-text { font-size: 14px; font-weight: 600; color: var(--text); }
+.upload-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* DOC EDIT ACTIONS */
+.doc-org-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.doc-org-bar.visible { display: flex; }
+
+/* INLINE EDIT HIGHLIGHT */
+.editing-card {
+  border-color: var(--current-accent) !important;
+  background: rgba(255,255,255,0.02) !important;
+}
+</style>
+</head>
+<body>
+
+<!-- LOCATION SELECTOR -->
+<div id="location-screen">
+  <div class="home-hero">
+    <span class="flag">🏁</span>
+    <h1 class="home-title">Event<span>Hub</span></h1>
+    <p class="home-sub">Select your event location</p>
+  </div>
+
+  <div class="location-list">
+    <div class="section-header">Today's Events</div>
+
+    <div class="loc-card" onclick="openLocation('dallas')">
+      <div class="loc-dot" style="color:#e63946;background:#e63946"></div>
+      <div class="loc-info">
+        <div class="loc-name">Dallas Autocross Championship</div>
+        <div class="loc-meta">Dallas, TX · Texas Motor Speedway · 8am–6pm</div>
+      </div>
+      <span class="loc-badge badge-live">● Live</span>
+    </div>
+
+    <div class="loc-card" onclick="openLocation('phoenix')">
+      <div class="loc-dot" style="color:#f4a261;background:#f4a261"></div>
+      <div class="loc-info">
+        <div class="loc-name">Phoenix Desert Sprint</div>
+        <div class="loc-meta">Phoenix, AZ · Phoenix Intl Raceway · 9am–5pm</div>
+      </div>
+      <span class="loc-badge badge-live">● Live</span>
+    </div>
+
+    <div class="loc-card" onclick="openLocation('chicago')">
+      <div class="loc-dot" style="color:#2a9d8f;background:#2a9d8f"></div>
+      <div class="loc-info">
+        <div class="loc-name">Chicago Lakes Sprint</div>
+        <div class="loc-meta">Chicago, IL · Joliet Circuit · 10am–4pm</div>
+      </div>
+      <span class="loc-badge badge-upcoming">Upcoming</span>
+    </div>
+
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:16px">
+      📲 Scan a QR code to jump directly to your location
+    </p>
+  </div>
+</div>
+
+<!-- MAIN APP SCREEN -->
+<div id="app-screen">
+
+  <!-- Demo role switcher -->
+  <div class="role-bar">
+    <span>👁 View as:</span>
+    <button class="role-btn active" id="role-attendee" onclick="setRole('attendee')">Attendee</button>
+    <button class="role-btn" id="role-organizer" onclick="setRole('organizer')">Organizer</button>
+  </div>
+
+  <!-- Offline bar -->
+  <div class="offline-bar" id="offline-bar">📶 Offline — results will sync when reconnected</div>
+
+  <!-- Location Header -->
+  <div class="loc-header" id="loc-header">
+    <div class="loc-banner" id="loc-banner">
+      <button class="loc-banner-back" onclick="goHome()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="loc-banner-info">
+        <div class="loc-banner-name" id="banner-name">Dallas</div>
+        <div class="loc-banner-sub" id="banner-sub">Dallas, TX · Texas Motor Speedway</div>
+      </div>
+    </div>
+    <div class="loc-banner-viewing" id="banner-viewing">You are viewing: DALLAS AUTOCROSS CHAMPIONSHIP</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('leaderboard')" id="tab-leaderboard">
+        <span class="tab-icon">🏆</span>Leaderboard
+      </button>
+      <button class="nav-tab" onclick="showPage('schedule')" id="tab-schedule">
+        <span class="tab-icon">📅</span>Schedule
+      </button>
+      <button class="nav-tab" onclick="showPage('downloads')" id="tab-downloads">
+        <span class="tab-icon">📄</span>Downloads
+      </button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+
+    <!-- LEADERBOARD PAGE -->
+    <div class="page active" id="page-leaderboard">
+      <div class="activity-tabs" id="activity-tabs"></div>
+      <div id="leaderboard-content"></div>
+    </div>
+
+    <!-- SCHEDULE PAGE -->
+    <div class="page" id="page-schedule">
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.05em;text-transform:uppercase">
+        All times in local timezone
+      </div>
+      <div class="activity-tabs" id="schedule-cat-tabs"></div>
+      <div id="schedule-content"></div>
+    </div>
+
+    <!-- DOWNLOADS PAGE -->
+    <div class="page" id="page-downloads">
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.05em;text-transform:uppercase">
+        Tap to download
+      </div>
+      <div id="downloads-content"></div>
+    </div>
+
+  </div>
+
+  <!-- Organizer FABs -->
+  <button class="org-fab" id="org-fab" onclick="openPanel()">✏️ Enter Result</button>
+  <button class="org-fab" id="sched-fab" onclick="openSchedulePanel(-1)">+ Add Item</button>
+  <button class="org-fab" id="doc-fab" onclick="openDocPanel()">+ Upload Doc</button>
+</div>
+
+<!-- Shared overlay -->
+<div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+<!-- SCHEDULE EDIT PANEL -->
+<div class="organizer-panel" id="sched-panel">
+  <div class="organizer-panel-handle"></div>
+  <div class="panel-title" id="sched-panel-title">📅 Add Schedule Item</div>
+  <input type="hidden" id="sched-edit-idx" value="-1">
+  <div class="field-group">
+    <label class="field-label">Title</label>
+    <input type="text" class="text-input" id="sched-title" placeholder="e.g. Drivers Meeting">
+  </div>
+  <div class="field-group input-row">
+    <div>
+      <label class="field-label">Start Time</label>
+      <input type="text" class="text-input" id="sched-start" placeholder="9:00 AM">
+    </div>
+    <div>
+      <label class="field-label">End Time</label>
+      <input type="text" class="text-input" id="sched-end" placeholder="9:30 AM">
+    </div>
+  </div>
+  <div class="field-group">
+    <label class="field-label">Category</label>
+    <input type="text" class="text-input" id="sched-cat" placeholder="e.g. Activity, Registration, Break">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Description (optional)</label>
+    <textarea class="text-input" id="sched-desc" rows="2" placeholder="Brief details about this item"></textarea>
+  </div>
+  <button class="save-btn" id="sched-save-btn" onclick="saveScheduleItem()">💾 Save Item</button>
+</div>
+
+<!-- DOCUMENT UPLOAD PANEL -->
+<div class="organizer-panel" id="doc-panel">
+  <div class="organizer-panel-handle"></div>
+  <div class="panel-title">📁 Upload Document</div>
+  <div class="field-group">
+    <label class="field-label">Document Title</label>
+    <input type="text" class="text-input" id="doc-title-input" placeholder="e.g. Updated Course Map">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Description (optional)</label>
+    <input type="text" class="text-input" id="doc-desc-input" placeholder="Brief description">
+  </div>
+  <div class="field-group">
+    <label class="field-label">Tag / Category</label>
+    <input type="text" class="text-input" id="doc-tag-input" placeholder="e.g. Rules, Course, Required">
+  </div>
+  <div class="field-group">
+    <label class="field-label">File</label>
+    <div class="upload-zone visible" id="upload-zone">
+      <input type="file" accept=".pdf,.doc,.docx,.xlsx,.png,.jpg" onchange="handleFileSelect(this)">
+      <div class="upload-icon" id="upload-icon">📎</div>
+      <div class="upload-text" id="upload-text">Tap to choose a file</div>
+      <div class="upload-sub" id="upload-sub">PDF, Word, Excel, or Image</div>
+    </div>
+  </div>
+  <button class="save-btn" id="doc-save-btn" onclick="saveDocument()">📤 Add to Downloads</button>
+</div>
+
+<!-- RESULT ENTRY PANEL -->
+<div class="organizer-panel" id="org-panel">
+  <div class="organizer-panel-handle"></div>
+  <div class="panel-title">✏️ Enter Result</div>
+
+  <div class="field-group">
+    <label class="field-label">Activity</label>
+    <select class="select-input" id="entry-activity" onchange="updateEntryActivity()"></select>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">Team</label>
+    <select class="select-input" id="entry-team"></select>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">Status</label>
+    <div class="status-row">
+      <button class="status-btn active-ok" onclick="setStatus('ok')">✅ OK</button>
+      <button class="status-btn" onclick="setStatus('dnf')">DNF</button>
+      <button class="status-btn" onclick="setStatus('dsq')">DSQ</button>
+      <button class="status-btn" onclick="setStatus('inc')">⏳ Inc</button>
+    </div>
+  </div>
+
+  <div class="field-group" id="value-group">
+    <label class="field-label" id="value-label">Time (seconds)</label>
+    <input type="number" class="number-input" id="entry-value" placeholder="63.412" inputmode="decimal" step="0.001">
+  </div>
+
+  <div class="field-group" id="penalties-group">
+    <label class="field-label">Penalties</label>
+    <div id="penalty-inputs"></div>
+  </div>
+
+  <button class="save-btn" id="save-btn" onclick="saveResult()">💾 Save Result</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const LOCATIONS = {
+  dallas: {
+    name: 'Dallas Autocross Championship', shortName: 'Dallas',
+    city: 'Dallas, TX', venue: 'Texas Motor Speedway',
+    accent: '#e63946', key: 'dallas',
+    teams: [
+      {id:'t1',name:'Team Rocket',number:'42'},
+      {id:'t2',name:'Speed Demons',number:'7'},
+      {id:'t3',name:'Turbo Tigers',number:'13'},
+      {id:'t4',name:'Lightning Lap',number:'99'},
+      {id:'t5',name:'Drift Kings',number:'21'},
+      {id:'t6',name:'Apex Hunters',number:'55'},
+    ],
+    activities: [
+      {id:'a1',name:'Autocross Run',type:'time',dir:'lower',weight:2,penalties:[{name:'cone',label:'Cones Hit',adj:2},{name:'oc',label:'Off Course',adj:10}],
+       points:{1:100,2:95,3:90,4:85,5:80,6:75},primary:true,live:true},
+      {id:'a2',name:'Car Knowledge Quiz',type:'score',dir:'higher',weight:1,penalties:[],
+       points:{1:100,2:90,3:80,4:70,5:60,6:50},primary:false,live:true},
+      {id:'a3',name:'Cone Slalom',type:'time',dir:'lower',weight:1.5,penalties:[{name:'cone',label:'Cones Hit',adj:2}],
+       points:{1:100,2:95,3:88,4:80,5:72,6:65},primary:false,live:true},
+    ],
+    results: {
+      a1: [
+        {team:'t1',raw:63412,penalties:{cone:1,oc:0},status:'ok'},
+        {team:'t2',raw:61870,penalties:{cone:0,oc:0},status:'ok'},
+        {team:'t3',raw:65200,penalties:{cone:2,oc:0},status:'ok'},
+        {team:'t4',raw:59100,penalties:{cone:0,oc:0},status:'ok'},
+        {team:'t5',raw:68000,penalties:{cone:0,oc:1},status:'ok'},
+        {team:'t6',raw:0,penalties:{},status:'dnf'},
+      ],
+      a2: [
+        {team:'t1',raw:88,penalties:{},status:'ok'},
+        {team:'t2',raw:72,penalties:{},status:'ok'},
+        {team:'t3',raw:91,penalties:{},status:'ok'},
+        {team:'t4',raw:85,penalties:{},status:'ok'},
+        {team:'t5',raw:78,penalties:{},status:'ok'},
+        {team:'t6',raw:95,penalties:{},status:'ok'},
+      ],
+      a3: [
+        {team:'t1',raw:28400,penalties:{cone:0},status:'ok'},
+        {team:'t2',raw:27200,penalties:{cone:1},status:'ok'},
+        {team:'t3',raw:29100,penalties:{cone:0},status:'ok'},
+        {team:'t4',raw:26500,penalties:{cone:0},status:'ok'},
+        {team:'t5',raw:31000,penalties:{cone:2},status:'ok'},
+        {team:'t6',raw:28800,penalties:{cone:1},status:'ok'},
+      ],
+    },
+    schedule: [
+      {title:'Gates Open & Registration',start:'7:00 AM',end:'8:30 AM',cat:'Registration',desc:'Pick up your transponder and tech packet'},
+      {title:'Tech Inspection',start:'7:30 AM',end:'9:00 AM',cat:'Registration',desc:'Vehicle safety check'},
+      {title:'Drivers Meeting',start:'9:00 AM',end:'9:30 AM',cat:'Operations',desc:'Mandatory for all drivers'},
+      {title:'Course Walk',start:'9:30 AM',end:'10:00 AM',cat:'Operations',desc:'Walk the course before competition'},
+      {title:'Autocross Runs Begin',start:'10:00 AM',end:'2:00 PM',cat:'Activity',desc:'Timed runs — 3 heats per driver'},
+      {title:'Lunch Break',start:'12:00 PM',end:'1:00 PM',cat:'Break',desc:'Food trucks on site'},
+      {title:'Car Knowledge Quiz',start:'2:00 PM',end:'3:00 PM',cat:'Activity',desc:'Written quiz — 20 questions'},
+      {title:'Cone Slalom Challenge',start:'3:00 PM',end:'4:30 PM',cat:'Activity',desc:'Precision slalom course'},
+      {title:'Awards & Results Reveal',start:'5:00 PM',end:'6:00 PM',cat:'Ceremony',desc:'Overall leaderboard revealed + trophies'},
+    ],
+    docs: [
+      {title:'Event Rules & Regulations',desc:'Official rulebook for the 2025 season',icon:'📄',tag:'Rules',tag2:'PDF'},
+      {title:'Course Map — Autocross',desc:'Layout diagram with cones and timing gates',icon:'🗺️',tag:'Course',tag2:'PDF'},
+      {title:'Driver Waiver Form',desc:'Required signature before first run',icon:'✍️',tag:'Required',tag2:'PDF'},
+      {title:'Technical Inspection Checklist',desc:'Pre-event vehicle requirements',icon:'🔧',tag:'Safety',tag2:'PDF'},
+    ],
+    overallHidden: true,
+  },
+  phoenix: {
+    name: 'Phoenix Desert Sprint', shortName: 'Phoenix',
+    city: 'Phoenix, AZ', venue: 'Phoenix Intl Raceway',
+    accent: '#f4a261', key: 'phoenix',
+    teams: [
+      {id:'p1',name:'Desert Heat',number:'11'},
+      {id:'p2',name:'Cactus Crew',number:'3'},
+      {id:'p3',name:'Sun Devils',number:'17'},
+      {id:'p4',name:'Roadrunners',number:'88'},
+    ],
+    activities: [
+      {id:'pa1',name:'Sprint Race',type:'time',dir:'lower',weight:2,penalties:[{name:'cone',label:'Cones',adj:2}],
+       points:{1:100,2:95,3:90,4:85},primary:true,live:true},
+      {id:'pa2',name:'Tech Quiz',type:'score',dir:'higher',weight:1,penalties:[],
+       points:{1:100,2:85,3:70,4:55},primary:false,live:true},
+    ],
+    results: {
+      pa1: [
+        {team:'p1',raw:55200,penalties:{cone:0},status:'ok'},
+        {team:'p2',raw:53800,penalties:{cone:1},status:'ok'},
+        {team:'p3',raw:58100,penalties:{cone:0},status:'ok'},
+        {team:'p4',raw:51200,penalties:{cone:0},status:'ok'},
+      ],
+      pa2: [
+        {team:'p1',raw:90,penalties:{},status:'ok'},
+        {team:'p2',raw:75,penalties:{},status:'ok'},
+        {team:'p3',raw:85,penalties:{},status:'ok'},
+        {team:'p4',raw:70,penalties:{},status:'ok'},
+      ],
+    },
+    schedule: [
+      {title:'Gates Open',start:'8:00 AM',end:'9:00 AM',cat:'Registration',desc:'Check in at main gate'},
+      {title:'Sprint Races',start:'10:00 AM',end:'3:00 PM',cat:'Activity',desc:'Timed sprints — 2 runs each'},
+      {title:'Tech Quiz',start:'3:30 PM',end:'4:30 PM',cat:'Activity',desc:'20 questions, 30 min'},
+      {title:'Trophy Ceremony',start:'5:00 PM',end:'5:30 PM',cat:'Ceremony',desc:''},
+    ],
+    docs: [
+      {title:'Phoenix Event Guide',desc:'Everything you need for today',icon:'📄',tag:'Info',tag2:'PDF'},
+      {title:'Sprint Course Layout',desc:'Cones, start, finish line map',icon:'🗺️',tag:'Course',tag2:'PDF'},
+    ],
+    overallHidden: false,
+  },
+  chicago: {
+    name: 'Chicago Lakes Sprint', shortName: 'Chicago',
+    city: 'Chicago, IL', venue: 'Joliet Circuit',
+    accent: '#2a9d8f', key: 'chicago',
+    teams: [
+      {id:'c1',name:'Windy City',number:'5'},
+      {id:'c2',name:'Lake Shore',number:'23'},
+    ],
+    activities: [
+      {id:'ca1',name:'Timed Run',type:'time',dir:'lower',weight:1,penalties:[{name:'cone',label:'Cones',adj:2}],
+       points:{1:100,2:90},primary:true,live:true},
+    ],
+    results: { ca1: [] },
+    schedule: [
+      {title:'Registration Opens',start:'9:00 AM',end:'10:00 AM',cat:'Registration',desc:''},
+      {title:'Competition',start:'11:00 AM',end:'3:00 PM',cat:'Activity',desc:''},
+    ],
+    docs: [
+      {title:'Chicago Event Info',desc:'Event guide and course info',icon:'📄',tag:'Info',tag2:'PDF'},
+    ],
+    overallHidden: false,
+  }
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let currentLoc = null;
+let currentPage = 'leaderboard';
+let currentActivity = null;
+let currentRole = 'attendee';
+let entryStatus = 'ok';
+let overallRevealed = {};
+let penaltyCounts = {};
+let downloadedDocs = new Set();
+let scheduleFilter = null;
+
+// ═══════════════════════════════════════════════
+// SCORING ENGINE
+// ═══════════════════════════════════════════════
+function getPointsForPlace(place, table) {
+  if (!isFinite(place)) return 0;
+  if (table[place] !== undefined) return table[place];
+  const maxPlace = Math.max(...Object.keys(table).map(Number));
+  const minPts = table[maxPlace] ?? 0;
+  return Math.max(0, minPts - (place - maxPlace) * 5);
+}
+
+function computeActivityBoard(loc, actId) {
+  const act = loc.activities.find(a => a.id === actId);
+  if (!act) return [];
+  const results = loc.results[actId] || [];
+  const teams = loc.teams;
+  const rows = results.map(r => {
+    const team = teams.find(t => t.id === r.team);
+    let adj = r.raw;
+    if (r.status === 'ok') {
+      let penAdj = 0;
+      act.penalties.forEach(p => { penAdj += (r.penalties[p.name]||0) * p.adj * 1000; });
+      if (act.dir === 'lower') adj = r.raw + penAdj;
+      else adj = r.raw - penAdj;
+    }
+    const totalPen = act.penalties.reduce((s,p)=>s+(r.penalties[p.name]||0),0);
+    return { team, adj, status: r.status, raw: r.raw, penalties: r.penalties, totalPen, act };
+  });
+
+  // Sort: complete first
+  const complete = rows.filter(r => r.status === 'ok').sort((a,b) => {
+    const diff = act.dir === 'lower' ? a.adj - b.adj : b.adj - a.adj;
+    if (diff !== 0) return diff;
+    return a.totalPen - b.totalPen;
+  });
+  const incomplete = rows.filter(r => r.status !== 'ok');
+
+  let rank = 1;
+  complete.forEach((r, i) => {
+    if (i > 0 && complete[i-1].adj === r.adj) r.rank = complete[i-1].rank;
+    else { r.rank = rank; }
+    rank = i + 2;
+    r.pts = getPointsForPlace(r.rank, act.points);
+    r.wpts = r.pts * act.weight;
+  });
+  incomplete.forEach(r => { r.rank = Infinity; r.pts = 0; r.wpts = 0; });
+
+  return [...complete, ...incomplete];
+}
+
+function computeOverall(loc) {
+  const totals = {};
+  loc.teams.forEach(t => { totals[t.id] = { team: t, total: 0, firsts: 0, acts: [] }; });
+
+  loc.activities.forEach(act => {
+    const board = computeActivityBoard(loc, act.id);
+    board.forEach(r => {
+      if (!totals[r.team.id]) return;
+      totals[r.team.id].total += r.wpts || 0;
+      if (r.rank === 1) totals[r.team.id].firsts++;
+      totals[r.team.id].acts.push({ name: act.name, rank: r.rank, wpts: r.wpts, status: r.status });
+    });
+  });
+
+  return Object.values(totals)
+    .sort((a,b) => b.total - a.total || b.firsts - a.firsts)
+    .map((d, i) => ({ ...d, rank: i+1 }));
+}
+
+// ═══════════════════════════════════════════════
+// LOCATION NAVIGATION
+// ═══════════════════════════════════════════════
+function openLocation(key) {
+  currentLoc = LOCATIONS[key];
+  currentActivity = 'overall';
+  scheduleFilter = null;
+
+  document.getElementById('location-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.flexDirection = 'column';
+
+  const accent = currentLoc.accent;
+  document.documentElement.style.setProperty('--current-accent', accent);
+  document.getElementById('loc-banner').style.background = accent;
+  document.getElementById('loc-banner').style.background =
+    `linear-gradient(135deg, ${accent}ee, ${accent}bb)`;
+  document.getElementById('loc-banner').style.backgroundImage =
+    `linear-gradient(135deg, ${accent}, ${darken(accent)})`;
+  document.getElementById('loc-header').style.background =
+    `linear-gradient(180deg, ${accent} 0%, ${darken(accent)} 100%)`;
+
+  document.getElementById('banner-name').textContent = currentLoc.shortName + ' Championship';
+  document.getElementById('banner-sub').textContent = `${currentLoc.city} · ${currentLoc.venue}`;
+  document.getElementById('banner-viewing').textContent = `You are viewing: ${currentLoc.name.toUpperCase()}`;
+
+  document.getElementById('save-btn').style.background = accent;
+
+  showPage('leaderboard');
+  renderActivityTabs();
+  renderLeaderboard();
+  renderSchedule();
+  renderDownloads();
+  updateOrgFab();
+}
+
+function darken(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.floor(r*0.7)},${Math.floor(g*0.7)},${Math.floor(b*0.7)})`;
+}
+
+function goHome() {
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('location-screen').style.display = 'flex';
+  currentLoc = null;
+}
+
+// ═══════════════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════════════
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('tab-' + page).classList.add('active');
+  updateOrgFab();
+}
+
+// ═══════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════
+function renderActivityTabs() {
+  const container = document.getElementById('activity-tabs');
+  const accent = currentLoc.accent;
+  let html = `<button class="act-tab ${currentActivity==='overall'?'active':''}" style="${currentActivity==='overall'?`background:${accent};border-color:${accent}`:''}" onclick="switchActivity('overall')">Overall</button>`;
+  currentLoc.activities.filter(a=>a.live).forEach(a => {
+    const isActive = currentActivity === a.id;
+    html += `<button class="act-tab ${isActive?'active':''}" style="${isActive?`background:${accent};border-color:${accent}`:''}" onclick="switchActivity('${a.id}')">${a.name}</button>`;
+  });
+  container.innerHTML = html;
+}
+
+function switchActivity(id) {
+  currentActivity = id;
+  renderActivityTabs();
+  renderLeaderboard();
+}
+
+function formatTime(ms) {
+  const min = Math.floor(ms/60000), sec = Math.floor((ms%60000)/1000), mil = ms%1000;
+  if (min > 0) return `${min}:${String(sec).padStart(2,'0')}.${String(mil).padStart(3,'0')}`;
+  return `${sec}.${String(mil).padStart(3,'0')}s`;
+}
+
+function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-content');
+  const accent = currentLoc.accent;
+  const isRevealed = overallRevealed[currentLoc.key];
+
+  if (currentActivity === 'overall') {
+    if (currentLoc.overallHidden && !isRevealed) {
+      container.innerHTML = `
+        <div class="hidden-banner">
+          <div class="lock">🔒</div>
+          <h3>Overall Standings Hidden</h3>
+          <p>Results will be revealed at the Awards Ceremony at 5:00 PM</p>
+          ${currentRole==='organizer'?`<button class="reveal-btn" style="background:${accent}" onclick="revealOverall()">🔓 Reveal Now (Organizer)</button>`:''}
+        </div>`;
+      return;
+    }
+
+    const board = computeOverall(currentLoc);
+    if (!board.length) { container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px">No results yet</p>'; return; }
+
+    let html = '';
+    board.forEach(e => {
+      const medal = e.rank===1?'🥇':e.rank===2?'🥈':e.rank===3?'🥉':'';
+      const detail = e.acts.map(a => `${a.name}: ${a.wpts.toFixed(0)}pts`).join(' · ');
+      html += `<div class="lb-entry rank-${e.rank}" style="animation-delay:${(e.rank-1)*0.05}s">
+        <div class="lb-rank ${e.rank<=3?'r'+e.rank:''}">${medal||e.rank}</div>
+        <div class="lb-team">
+          <div class="lb-team-name">#${e.team.number} ${e.team.name}</div>
+          <div class="lb-team-detail">${detail}</div>
+        </div>
+        <div class="lb-points">
+          <div class="lb-points-val" style="color:${accent}">${e.total.toFixed(1)}</div>
+          <div class="lb-points-label">pts</div>
+        </div>
+      </div>`;
+    });
+    container.innerHTML = html;
+    return;
+  }
+
+  const board = computeActivityBoard(currentLoc, currentActivity);
+  const act = currentLoc.activities.find(a => a.id === currentActivity);
+  if (!board.length) { container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px">No results yet</p>'; return; }
+
+  let html = `<div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em">
+    ${act.type==='time'?'⏱ Time · lower is better':'🎯 Score · higher is better'} · Weight: ${act.weight}×
+  </div>`;
+  board.forEach((e, i) => {
+    const medal = e.rank===1?'🥇':e.rank===2?'🥈':e.rank===3?'🥉':'';
+    let detail = '';
+    if (e.status === 'ok') {
+      if (act.type === 'time') {
+        detail = formatTime(e.adj);
+        const penTotal = Object.values(e.penalties).reduce((s,v)=>s+v,0);
+        if (penTotal > 0) detail += ` (${penTotal} pen)`;
+      } else {
+        detail = `${e.raw} pts`;
+      }
+    }
+    const rank = isFinite(e.rank) ? e.rank : '—';
+    html += `<div class="lb-entry ${isFinite(e.rank)&&e.rank<=3?'rank-'+e.rank:''}" style="animation-delay:${i*0.05}s;${e.status!=='ok'?'opacity:0.6':''}">
+      <div class="lb-rank ${isFinite(e.rank)&&e.rank<=3?'r'+e.rank:''}">${medal||rank}</div>
+      <div class="lb-team">
+        <div class="lb-team-name">#${e.team.number} ${e.team.name}</div>
+        ${e.status!=='ok'?`<div class="lb-team-detail" style="color:#e63946;font-weight:700;text-transform:uppercase">${e.status}</div>`:`<div class="lb-team-detail">${detail}</div>`}
+      </div>
+      <div class="lb-points">
+        <div class="lb-points-val" style="color:${accent}">${e.wpts?.toFixed(1)||'—'}</div>
+        <div class="lb-points-label">pts</div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function revealOverall() {
+  overallRevealed[currentLoc.key] = true;
+  renderLeaderboard();
+  showToast('🔓 Overall standings revealed!');
+}
+
+// ═══════════════════════════════════════════════
+// SCHEDULE
+// ═══════════════════════════════════════════════
+function renderSchedule() {
+  const accent = currentLoc.accent;
+  const cats = [...new Set(currentLoc.schedule.map(i=>i.cat))];
+  const isOrg = currentRole === 'organizer';
+
+  // Category filter tabs
+  const catContainer = document.getElementById('schedule-cat-tabs');
+  let catHtml = `<button class="act-tab ${!scheduleFilter?'active':''}" style="${!scheduleFilter?`background:${accent};border-color:${accent}`:''}" onclick="filterSchedule(null)">All</button>`;
+  cats.forEach(c => {
+    const active = scheduleFilter === c;
+    catHtml += `<button class="act-tab ${active?'active':''}" style="${active?`background:${accent};border-color:${accent}`:''}" onclick="filterSchedule('${c}')">${c}</button>`;
+  });
+  catContainer.innerHTML = catHtml;
+
+  const items = scheduleFilter ? currentLoc.schedule.filter(i=>i.cat===scheduleFilter) : currentLoc.schedule;
+  const nowHour = 14;
+
+  const container = document.getElementById('schedule-content');
+  let html = '';
+  items.forEach((item, visIdx) => {
+    // find real index in full array for edit/delete
+    const realIdx = currentLoc.schedule.indexOf(item);
+    const startH = parseInt(item.start.split(':')[0]) + (item.start.includes('PM')&&!item.start.startsWith('12')?12:0);
+    const endH = item.end ? (parseInt(item.end.split(':')[0]) + (item.end.includes('PM')&&!item.end.startsWith('12')?12:0)) : startH+1;
+    const isNow = startH <= nowHour && endH >= nowHour;
+    const isPast = endH < nowHour;
+
+    html += `<div class="schedule-item" style="animation-delay:${visIdx*0.04}s">
+      <div class="sched-time">
+        <div class="sched-time-main">${item.start}</div>
+        ${item.end?`<div class="sched-time-end">${item.end}</div>`:''}
+      </div>
+      <div class="sched-line">
+        <div class="sched-dot" style="background:${isNow?accent:(isPast?'#2a2a3a':'#3a3a4a')}"></div>
+        ${visIdx<items.length-1?'<div class="sched-connector"></div>':''}
+      </div>
+      <div class="sched-card ${isNow?'now':''}" style="${isNow?`border-color:${accent};`:''};opacity:${isPast?'0.6':'1'}">
+        ${isNow?`<div class="now-badge" style="background:${accent}">● Now</div>`:''}
+        <div class="sched-card-title">${item.title}</div>
+        <div class="sched-card-cat">${item.cat||''}</div>
+        ${item.desc?`<div class="sched-card-desc">${item.desc}</div>`:''}
+        <div class="sched-org-actions ${isOrg?'visible':''}">
+          <button class="sched-action-btn" onclick="openSchedulePanel(${realIdx})">✏️ Edit</button>
+          <button class="sched-action-btn danger" onclick="deleteScheduleItem(${realIdx})">🗑 Delete</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // Add-item button (organizer only)
+  html += `<button class="org-add-btn ${isOrg?'visible':''}" onclick="openSchedulePanel(-1)" style="border-color:${accent}40">
+    + Add Schedule Item
+  </button>`;
+
+  container.innerHTML = html;
+}
+
+function filterSchedule(cat) {
+  scheduleFilter = cat;
+  renderSchedule();
+}
+
+// ═══════════════════════════════════════════════
+// DOWNLOADS
+// ═══════════════════════════════════════════════
+function renderDownloads() {
+  const accent = currentLoc.accent;
+  const isOrg = currentRole === 'organizer';
+  const container = document.getElementById('downloads-content');
+  let html = '';
+
+  if (!currentLoc.docs.length) {
+    html = `<div style="text-align:center;padding:40px 20px;color:var(--muted)">
+      <div style="font-size:36px;margin-bottom:12px">📭</div>
+      <p style="font-size:14px">No documents yet.</p>
+      ${isOrg?`<p style="font-size:12px;margin-top:6px">Use the Upload button to add files.</p>`:''}
+    </div>`;
+  } else {
+    currentLoc.docs.forEach((doc, i) => {
+      const downloaded = downloadedDocs.has(`${currentLoc.key}-${i}`);
+      html += `<div class="doc-card" style="animation-delay:${i*0.07}s;display:block;cursor:default">
+        <div style="display:flex;align-items:center;gap:14px" onclick="${isOrg?'':(`downloadDoc(${i})`)}">
+          <div class="doc-icon">${doc.icon}</div>
+          <div class="doc-info">
+            <div class="doc-title">${doc.title}</div>
+            <div class="doc-desc">${doc.desc||''}</div>
+            <div class="doc-meta">
+              <span class="doc-tag" style="background:${accent}22;color:${accent}">${doc.tag}</span>
+              <span class="doc-tag" style="background:rgba(107,107,136,0.15);color:var(--muted)">${doc.tag2||'PDF'}</span>
+              ${downloaded?'<span style="font-size:11px;color:#2a9d8f">✓ Downloaded</span>':''}
+            </div>
+          </div>
+          ${!isOrg?`<div class="doc-arrow ${downloaded?'doc-downloaded':''}">${downloaded?'✓':'↓'}</div>`:''}
+        </div>
+        <div class="doc-org-bar ${isOrg?'visible':''}">
+          <span style="font-size:11px;color:var(--muted)">Visible to attendees</span>
+          <div style="display:flex;gap:6px">
+            <button class="sched-action-btn" onclick="downloadDoc(${i})">👁 Preview</button>
+            <button class="sched-action-btn danger" onclick="deleteDoc(${i})">🗑 Remove</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function downloadDoc(idx) {
+  const key = `${currentLoc.key}-${idx}`;
+  downloadedDocs.add(key);
+  showToast('📄 Document opened!');
+  renderDownloads();
+}
+
+// ═══════════════════════════════════════════════
+// ORGANIZER PANEL
+// ═══════════════════════════════════════════════
+function openPanel() {
+  const actSelect = document.getElementById('entry-activity');
+  const teamSelect = document.getElementById('entry-team');
+  actSelect.innerHTML = currentLoc.activities.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  teamSelect.innerHTML = currentLoc.teams.map(t=>`<option value="${t.id}">#${t.number} ${t.team||t.name}</option>`).join('');
+  updateEntryActivity();
+  document.getElementById('org-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  setStatus('ok');
+}
+
+function closePanel() {
+  document.getElementById('org-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function closeAllPanels() {
+  ['org-panel','sched-panel','doc-panel'].forEach(id => {
+    document.getElementById(id).classList.remove('open');
+  });
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+// SCHEDULE EDITING
+// ═══════════════════════════════════════════════
+function openSchedulePanel(idx) {
+  const panel = document.getElementById('sched-panel');
+  document.getElementById('sched-edit-idx').value = idx;
+
+  if (idx >= 0) {
+    // Edit mode — pre-fill fields
+    const item = currentLoc.schedule[idx];
+    document.getElementById('sched-panel-title').textContent = '✏️ Edit Schedule Item';
+    document.getElementById('sched-title').value = item.title;
+    document.getElementById('sched-start').value = item.start;
+    document.getElementById('sched-end').value = item.end || '';
+    document.getElementById('sched-cat').value = item.cat || '';
+    document.getElementById('sched-desc').value = item.desc || '';
+    document.getElementById('sched-save-btn').textContent = '💾 Save Changes';
+  } else {
+    // Add mode — clear fields
+    document.getElementById('sched-panel-title').textContent = '📅 Add Schedule Item';
+    document.getElementById('sched-title').value = '';
+    document.getElementById('sched-start').value = '';
+    document.getElementById('sched-end').value = '';
+    document.getElementById('sched-cat').value = '';
+    document.getElementById('sched-desc').value = '';
+    document.getElementById('sched-save-btn').textContent = '✅ Add to Schedule';
+  }
+
+  document.getElementById('sched-save-btn').style.background = currentLoc.accent;
+  panel.classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function saveScheduleItem() {
+  const title = document.getElementById('sched-title').value.trim();
+  const start = document.getElementById('sched-start').value.trim();
+  if (!title || !start) { showToast('⚠️ Title and start time are required'); return; }
+
+  const item = {
+    title,
+    start,
+    end: document.getElementById('sched-end').value.trim() || null,
+    cat: document.getElementById('sched-cat').value.trim() || 'General',
+    desc: document.getElementById('sched-desc').value.trim() || null,
+  };
+
+  const idx = parseInt(document.getElementById('sched-edit-idx').value);
+  if (idx >= 0) {
+    currentLoc.schedule[idx] = item;
+    showToast('✅ Schedule item updated!');
+  } else {
+    currentLoc.schedule.push(item);
+    // Sort by start time (simple string sort works for 12hr format here)
+    currentLoc.schedule.sort((a, b) => {
+      const toMins = t => {
+        const [time, period] = t.split(' ');
+        let [h, m] = time.split(':').map(Number);
+        if (period === 'PM' && h !== 12) h += 12;
+        if (period === 'AM' && h === 12) h = 0;
+        return h * 60 + (m || 0);
+      };
+      return toMins(a.start) - toMins(b.start);
+    });
+    showToast('✅ Item added to schedule!');
+  }
+
+  closeAllPanels();
+  scheduleFilter = null;
+  renderSchedule();
+}
+
+function deleteScheduleItem(idx) {
+  const item = currentLoc.schedule[idx];
+  if (!confirm(`Delete "${item.title}" from the schedule?`)) return;
+  currentLoc.schedule.splice(idx, 1);
+  renderSchedule();
+  showToast('🗑 Item removed from schedule');
+}
+
+// ═══════════════════════════════════════════════
+// DOCUMENT UPLOAD
+// ═══════════════════════════════════════════════
+let selectedFile = null;
+
+function openDocPanel() {
+  // Reset form
+  document.getElementById('doc-title-input').value = '';
+  document.getElementById('doc-desc-input').value = '';
+  document.getElementById('doc-tag-input').value = '';
+  document.getElementById('upload-icon').textContent = '📎';
+  document.getElementById('upload-text').textContent = 'Tap to choose a file';
+  document.getElementById('upload-sub').textContent = 'PDF, Word, Excel, or Image';
+  document.getElementById('doc-save-btn').style.background = currentLoc.accent;
+  selectedFile = null;
+
+  document.getElementById('doc-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedFile = file;
+
+  // Show file info in drop zone
+  const ext = file.name.split('.').pop().toLowerCase();
+  const icons = { pdf:'📄', doc:'📝', docx:'📝', xlsx:'📊', png:'🖼️', jpg:'🖼️' };
+  document.getElementById('upload-icon').textContent = icons[ext] || '📎';
+  document.getElementById('upload-text').textContent = file.name;
+  document.getElementById('upload-sub').textContent = `${(file.size/1024).toFixed(0)} KB · ${ext.toUpperCase()}`;
+
+  // Auto-fill title from filename if empty
+  const titleInput = document.getElementById('doc-title-input');
+  if (!titleInput.value) {
+    titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+}
+
+function saveDocument() {
+  const title = document.getElementById('doc-title-input').value.trim();
+  if (!title) { showToast('⚠️ Enter a document title'); return; }
+  if (!selectedFile) { showToast('⚠️ Choose a file first'); return; }
+
+  const ext = selectedFile.name.split('.').pop().toLowerCase();
+  const icons = { pdf:'📄', doc:'📝', docx:'📝', xlsx:'📊', png:'🖼️', jpg:'🖼️' };
+  const tag = document.getElementById('doc-tag-input').value.trim() || 'Document';
+
+  currentLoc.docs.push({
+    title,
+    desc: document.getElementById('doc-desc-input').value.trim(),
+    icon: icons[ext] || '📎',
+    tag,
+    tag2: ext.toUpperCase(),
+    fileName: selectedFile.name,
+  });
+
+  closeAllPanels();
+  renderDownloads();
+  showToast(`📤 "${title}" added to downloads!`);
+}
+
+function deleteDoc(idx) {
+  const doc = currentLoc.docs[idx];
+  if (!confirm(`Remove "${doc.title}" from downloads?`)) return;
+  currentLoc.docs.splice(idx, 1);
+  renderDownloads();
+  showToast('🗑 Document removed');
+}
+
+function updateEntryActivity() {
+  const actId = document.getElementById('entry-activity').value;
+  const act = currentLoc.activities.find(a=>a.id===actId);
+  if (!act) return;
+  document.getElementById('value-label').textContent = act.type==='time'?'Time (seconds)':'Score';
+  document.getElementById('entry-value').placeholder = act.type==='time'?'63.412':'85';
+  penaltyCounts = {};
+  const pc = document.getElementById('penalty-inputs');
+  if (!act.penalties.length) {
+    pc.innerHTML = '<p style="color:var(--muted);font-size:12px">No penalties for this activity</p>';
+    return;
+  }
+  pc.innerHTML = act.penalties.map(p=>`
+    <div class="penalty-row">
+      <div class="penalty-label">${p.label} <span class="penalty-adj">(+${p.adj}s each)</span></div>
+      <button class="counter-btn" onclick="adjustPenalty('${p.name}',-1)">−</button>
+      <div class="counter-val" id="pen-${p.name}">0</div>
+      <button class="counter-btn" onclick="adjustPenalty('${p.name}',1)">+</button>
+    </div>`).join('');
+}
+
+function adjustPenalty(name, delta) {
+  penaltyCounts[name] = Math.max(0, (penaltyCounts[name]||0) + delta);
+  const el = document.getElementById('pen-'+name);
+  if (el) el.textContent = penaltyCounts[name];
+}
+
+function setStatus(s) {
+  entryStatus = s;
+  document.querySelectorAll('.status-btn').forEach(b=>b.className='status-btn');
+  const map = {ok:'active-ok',dnf:'active-dnf',dsq:'active-dsq',inc:'active-inc'};
+  document.querySelectorAll('.status-btn')[['ok','dnf','dsq','inc'].indexOf(s)].className = `status-btn ${map[s]}`;
+  const showVal = s === 'ok';
+  document.getElementById('value-group').style.display = showVal ? '' : 'none';
+  document.getElementById('penalties-group').style.display = showVal ? '' : 'none';
+}
+
+function saveResult() {
+  const actId = document.getElementById('entry-activity').value;
+  const teamId = document.getElementById('entry-team').value;
+  const val = document.getElementById('entry-value').value;
+  const act = currentLoc.activities.find(a=>a.id===actId);
+  const team = currentLoc.teams.find(t=>t.id===teamId);
+
+  if (entryStatus === 'ok' && !val) { showToast('⚠️ Enter a value first'); return; }
+
+  const rawMs = act.type==='time' ? Math.round(parseFloat(val)*1000) : parseFloat(val);
+  const results = currentLoc.results[actId] || [];
+  const existingIdx = results.findIndex(r=>r.team===teamId);
+  const newResult = { team: teamId, raw: rawMs, penalties: {...penaltyCounts}, status: entryStatus };
+
+  if (existingIdx >= 0) results[existingIdx] = newResult;
+  else results.push(newResult);
+  currentLoc.results[actId] = results;
+
+  closePanel();
+  switchActivity(actId);
+  showToast(`✅ Result saved for ${team.name}!`);
+}
+
+// ═══════════════════════════════════════════════
+// ROLE SWITCHER
+// ═══════════════════════════════════════════════
+function setRole(role) {
+  currentRole = role;
+  document.getElementById('role-attendee').classList.toggle('active', role==='attendee');
+  document.getElementById('role-organizer').classList.toggle('active', role==='organizer');
+  updateOrgFab();
+  if (currentLoc) {
+    renderLeaderboard();
+    renderSchedule();
+    renderDownloads();
+  }
+}
+
+function updateOrgFab() {
+  const isOrg = currentRole === 'organizer';
+  const accent = currentLoc ? currentLoc.accent : '#2563eb';
+
+  const resultFab = document.getElementById('org-fab');
+  const schedFab  = document.getElementById('sched-fab');
+  const docFab    = document.getElementById('doc-fab');
+
+  // Result FAB: organizer + leaderboard page
+  const showResult = isOrg && currentPage === 'leaderboard' && !!currentLoc;
+  resultFab.classList.toggle('visible', showResult);
+
+  // Schedule FAB: organizer + schedule page
+  const showSched = isOrg && currentPage === 'schedule' && !!currentLoc;
+  schedFab.classList.toggle('visible', showSched);
+
+  // Doc FAB: organizer + downloads page
+  const showDoc = isOrg && currentPage === 'downloads' && !!currentLoc;
+  docFab.classList.toggle('visible', showDoc);
+
+  [resultFab, schedFab, docFab].forEach(b => { if (currentLoc) b.style.background = accent; });
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
