@@ -810,12 +810,6 @@ body {
       <button class="nav-tab active" onclick="showPage('leaderboard')" id="tab-leaderboard">
         <span class="tab-icon">🏆</span>Leaderboard
       </button>
-      <button class="nav-tab" onclick="showPage('schedule')" id="tab-schedule">
-        <span class="tab-icon">📅</span>Schedule
-      </button>
-      <button class="nav-tab" onclick="showPage('downloads')" id="tab-downloads">
-        <span class="tab-icon">📄</span>Downloads
-      </button>
     </nav>
   </div>
 
@@ -828,91 +822,14 @@ body {
       <div id="leaderboard-content"></div>
     </div>
 
-    <!-- SCHEDULE PAGE -->
-    <div class="page" id="page-schedule">
-      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.05em;text-transform:uppercase">
-        All times in local timezone
-      </div>
-      <div class="activity-tabs" id="schedule-cat-tabs"></div>
-      <div id="schedule-content"></div>
-    </div>
-
-    <!-- DOWNLOADS PAGE -->
-    <div class="page" id="page-downloads">
-      <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.05em;text-transform:uppercase">
-        Tap to download
-      </div>
-      <div id="downloads-content"></div>
-    </div>
-
   </div>
 
-  <!-- Organizer FABs -->
+  <!-- Organizer FAB -->
   <button class="org-fab" id="org-fab" onclick="openPanel()">✏️ Enter Result</button>
-  <button class="org-fab" id="sched-fab" onclick="openSchedulePanel(-1)">+ Add Item</button>
-  <button class="org-fab" id="doc-fab" onclick="openDocPanel()">+ Upload Doc</button>
 </div>
 
 <!-- Shared overlay -->
 <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
-
-<!-- SCHEDULE EDIT PANEL -->
-<div class="organizer-panel" id="sched-panel">
-  <div class="organizer-panel-handle"></div>
-  <div class="panel-title" id="sched-panel-title">📅 Add Schedule Item</div>
-  <input type="hidden" id="sched-edit-idx" value="-1">
-  <div class="field-group">
-    <label class="field-label">Title</label>
-    <input type="text" class="text-input" id="sched-title" placeholder="e.g. Drivers Meeting">
-  </div>
-  <div class="field-group input-row">
-    <div>
-      <label class="field-label">Start Time</label>
-      <input type="text" class="text-input" id="sched-start" placeholder="9:00 AM">
-    </div>
-    <div>
-      <label class="field-label">End Time</label>
-      <input type="text" class="text-input" id="sched-end" placeholder="9:30 AM">
-    </div>
-  </div>
-  <div class="field-group">
-    <label class="field-label">Category</label>
-    <input type="text" class="text-input" id="sched-cat" placeholder="e.g. Activity, Registration, Break">
-  </div>
-  <div class="field-group">
-    <label class="field-label">Description (optional)</label>
-    <textarea class="text-input" id="sched-desc" rows="2" placeholder="Brief details about this item"></textarea>
-  </div>
-  <button class="save-btn" id="sched-save-btn" onclick="saveScheduleItem()">💾 Save Item</button>
-</div>
-
-<!-- DOCUMENT UPLOAD PANEL -->
-<div class="organizer-panel" id="doc-panel">
-  <div class="organizer-panel-handle"></div>
-  <div class="panel-title">📁 Upload Document</div>
-  <div class="field-group">
-    <label class="field-label">Document Title</label>
-    <input type="text" class="text-input" id="doc-title-input" placeholder="e.g. Updated Course Map">
-  </div>
-  <div class="field-group">
-    <label class="field-label">Description (optional)</label>
-    <input type="text" class="text-input" id="doc-desc-input" placeholder="Brief description">
-  </div>
-  <div class="field-group">
-    <label class="field-label">Tag / Category</label>
-    <input type="text" class="text-input" id="doc-tag-input" placeholder="e.g. Rules, Course, Required">
-  </div>
-  <div class="field-group">
-    <label class="field-label">File</label>
-    <div class="upload-zone visible" id="upload-zone">
-      <input type="file" accept=".pdf,.doc,.docx,.xlsx,.png,.jpg" onchange="handleFileSelect(this)">
-      <div class="upload-icon" id="upload-icon">📎</div>
-      <div class="upload-text" id="upload-text">Tap to choose a file</div>
-      <div class="upload-sub" id="upload-sub">PDF, Word, Excel, or Image</div>
-    </div>
-  </div>
-  <button class="save-btn" id="doc-save-btn" onclick="saveDocument()">📤 Add to Downloads</button>
-</div>
 
 <!-- RESULT ENTRY PANEL -->
 <div class="organizer-panel" id="org-panel">
@@ -1006,23 +923,6 @@ const LOCATIONS = {
         {team:'t6',raw:28800,penalties:{cone:1},status:'ok'},
       ],
     },
-    schedule: [
-      {title:'Gates Open & Registration',start:'7:00 AM',end:'8:30 AM',cat:'Registration',desc:'Pick up your transponder and tech packet'},
-      {title:'Tech Inspection',start:'7:30 AM',end:'9:00 AM',cat:'Registration',desc:'Vehicle safety check'},
-      {title:'Drivers Meeting',start:'9:00 AM',end:'9:30 AM',cat:'Operations',desc:'Mandatory for all drivers'},
-      {title:'Course Walk',start:'9:30 AM',end:'10:00 AM',cat:'Operations',desc:'Walk the course before competition'},
-      {title:'Autocross Runs Begin',start:'10:00 AM',end:'2:00 PM',cat:'Activity',desc:'Timed runs — 3 heats per driver'},
-      {title:'Lunch Break',start:'12:00 PM',end:'1:00 PM',cat:'Break',desc:'Food trucks on site'},
-      {title:'Car Knowledge Quiz',start:'2:00 PM',end:'3:00 PM',cat:'Activity',desc:'Written quiz — 20 questions'},
-      {title:'Cone Slalom Challenge',start:'3:00 PM',end:'4:30 PM',cat:'Activity',desc:'Precision slalom course'},
-      {title:'Awards & Results Reveal',start:'5:00 PM',end:'6:00 PM',cat:'Ceremony',desc:'Overall leaderboard revealed + trophies'},
-    ],
-    docs: [
-      {title:'Event Rules & Regulations',desc:'Official rulebook for the 2025 season',icon:'📄',tag:'Rules',tag2:'PDF'},
-      {title:'Course Map — Autocross',desc:'Layout diagram with cones and timing gates',icon:'🗺️',tag:'Course',tag2:'PDF'},
-      {title:'Driver Waiver Form',desc:'Required signature before first run',icon:'✍️',tag:'Required',tag2:'PDF'},
-      {title:'Technical Inspection Checklist',desc:'Pre-event vehicle requirements',icon:'🔧',tag:'Safety',tag2:'PDF'},
-    ],
     overallHidden: true,
   },
   phoenix: {
@@ -1055,16 +955,6 @@ const LOCATIONS = {
         {team:'p4',raw:70,penalties:{},status:'ok'},
       ],
     },
-    schedule: [
-      {title:'Gates Open',start:'8:00 AM',end:'9:00 AM',cat:'Registration',desc:'Check in at main gate'},
-      {title:'Sprint Races',start:'10:00 AM',end:'3:00 PM',cat:'Activity',desc:'Timed sprints — 2 runs each'},
-      {title:'Tech Quiz',start:'3:30 PM',end:'4:30 PM',cat:'Activity',desc:'20 questions, 30 min'},
-      {title:'Trophy Ceremony',start:'5:00 PM',end:'5:30 PM',cat:'Ceremony',desc:''},
-    ],
-    docs: [
-      {title:'Phoenix Event Guide',desc:'Everything you need for today',icon:'📄',tag:'Info',tag2:'PDF'},
-      {title:'Sprint Course Layout',desc:'Cones, start, finish line map',icon:'🗺️',tag:'Course',tag2:'PDF'},
-    ],
     overallHidden: false,
   },
   chicago: {
@@ -1080,13 +970,6 @@ const LOCATIONS = {
        points:{1:100,2:90},primary:true,live:true},
     ],
     results: { ca1: [] },
-    schedule: [
-      {title:'Registration Opens',start:'9:00 AM',end:'10:00 AM',cat:'Registration',desc:''},
-      {title:'Competition',start:'11:00 AM',end:'3:00 PM',cat:'Activity',desc:''},
-    ],
-    docs: [
-      {title:'Chicago Event Info',desc:'Event guide and course info',icon:'📄',tag:'Info',tag2:'PDF'},
-    ],
     overallHidden: false,
   }
 };
@@ -1101,8 +984,6 @@ let currentRole = 'attendee';
 let entryStatus = 'ok';
 let overallRevealed = {};
 let penaltyCounts = {};
-let downloadedDocs = new Set();
-let scheduleFilter = null;
 
 // ═══════════════════════════════════════════════
 // SCORING ENGINE
@@ -1179,7 +1060,6 @@ function computeOverall(loc) {
 function openLocation(key) {
   currentLoc = LOCATIONS[key];
   currentActivity = 'overall';
-  scheduleFilter = null;
 
   document.getElementById('location-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'flex';
@@ -1204,8 +1084,6 @@ function openLocation(key) {
   showPage('leaderboard');
   renderActivityTabs();
   renderLeaderboard();
-  renderSchedule();
-  renderDownloads();
   updateOrgFab();
 }
 
@@ -1340,124 +1218,6 @@ function revealOverall() {
 }
 
 // ═══════════════════════════════════════════════
-// SCHEDULE
-// ═══════════════════════════════════════════════
-function renderSchedule() {
-  const accent = currentLoc.accent;
-  const cats = [...new Set(currentLoc.schedule.map(i=>i.cat))];
-  const isOrg = currentRole === 'organizer';
-
-  // Category filter tabs
-  const catContainer = document.getElementById('schedule-cat-tabs');
-  let catHtml = `<button class="act-tab ${!scheduleFilter?'active':''}" style="${!scheduleFilter?`background:${accent};border-color:${accent}`:''}" onclick="filterSchedule(null)">All</button>`;
-  cats.forEach(c => {
-    const active = scheduleFilter === c;
-    catHtml += `<button class="act-tab ${active?'active':''}" style="${active?`background:${accent};border-color:${accent}`:''}" onclick="filterSchedule('${c}')">${c}</button>`;
-  });
-  catContainer.innerHTML = catHtml;
-
-  const items = scheduleFilter ? currentLoc.schedule.filter(i=>i.cat===scheduleFilter) : currentLoc.schedule;
-  const nowHour = 14;
-
-  const container = document.getElementById('schedule-content');
-  let html = '';
-  items.forEach((item, visIdx) => {
-    // find real index in full array for edit/delete
-    const realIdx = currentLoc.schedule.indexOf(item);
-    const startH = parseInt(item.start.split(':')[0]) + (item.start.includes('PM')&&!item.start.startsWith('12')?12:0);
-    const endH = item.end ? (parseInt(item.end.split(':')[0]) + (item.end.includes('PM')&&!item.end.startsWith('12')?12:0)) : startH+1;
-    const isNow = startH <= nowHour && endH >= nowHour;
-    const isPast = endH < nowHour;
-
-    html += `<div class="schedule-item" style="animation-delay:${visIdx*0.04}s">
-      <div class="sched-time">
-        <div class="sched-time-main">${item.start}</div>
-        ${item.end?`<div class="sched-time-end">${item.end}</div>`:''}
-      </div>
-      <div class="sched-line">
-        <div class="sched-dot" style="background:${isNow?accent:(isPast?'#2a2a3a':'#3a3a4a')}"></div>
-        ${visIdx<items.length-1?'<div class="sched-connector"></div>':''}
-      </div>
-      <div class="sched-card ${isNow?'now':''}" style="${isNow?`border-color:${accent};`:''};opacity:${isPast?'0.6':'1'}">
-        ${isNow?`<div class="now-badge" style="background:${accent}">● Now</div>`:''}
-        <div class="sched-card-title">${item.title}</div>
-        <div class="sched-card-cat">${item.cat||''}</div>
-        ${item.desc?`<div class="sched-card-desc">${item.desc}</div>`:''}
-        <div class="sched-org-actions ${isOrg?'visible':''}">
-          <button class="sched-action-btn" onclick="openSchedulePanel(${realIdx})">✏️ Edit</button>
-          <button class="sched-action-btn danger" onclick="deleteScheduleItem(${realIdx})">🗑 Delete</button>
-        </div>
-      </div>
-    </div>`;
-  });
-
-  // Add-item button (organizer only)
-  html += `<button class="org-add-btn ${isOrg?'visible':''}" onclick="openSchedulePanel(-1)" style="border-color:${accent}40">
-    + Add Schedule Item
-  </button>`;
-
-  container.innerHTML = html;
-}
-
-function filterSchedule(cat) {
-  scheduleFilter = cat;
-  renderSchedule();
-}
-
-// ═══════════════════════════════════════════════
-// DOWNLOADS
-// ═══════════════════════════════════════════════
-function renderDownloads() {
-  const accent = currentLoc.accent;
-  const isOrg = currentRole === 'organizer';
-  const container = document.getElementById('downloads-content');
-  let html = '';
-
-  if (!currentLoc.docs.length) {
-    html = `<div style="text-align:center;padding:40px 20px;color:var(--muted)">
-      <div style="font-size:36px;margin-bottom:12px">📭</div>
-      <p style="font-size:14px">No documents yet.</p>
-      ${isOrg?`<p style="font-size:12px;margin-top:6px">Use the Upload button to add files.</p>`:''}
-    </div>`;
-  } else {
-    currentLoc.docs.forEach((doc, i) => {
-      const downloaded = downloadedDocs.has(`${currentLoc.key}-${i}`);
-      html += `<div class="doc-card" style="animation-delay:${i*0.07}s;display:block;cursor:default">
-        <div style="display:flex;align-items:center;gap:14px" onclick="${isOrg?'':(`downloadDoc(${i})`)}">
-          <div class="doc-icon">${doc.icon}</div>
-          <div class="doc-info">
-            <div class="doc-title">${doc.title}</div>
-            <div class="doc-desc">${doc.desc||''}</div>
-            <div class="doc-meta">
-              <span class="doc-tag" style="background:${accent}22;color:${accent}">${doc.tag}</span>
-              <span class="doc-tag" style="background:rgba(107,107,136,0.15);color:var(--muted)">${doc.tag2||'PDF'}</span>
-              ${downloaded?'<span style="font-size:11px;color:#2a9d8f">✓ Downloaded</span>':''}
-            </div>
-          </div>
-          ${!isOrg?`<div class="doc-arrow ${downloaded?'doc-downloaded':''}">${downloaded?'✓':'↓'}</div>`:''}
-        </div>
-        <div class="doc-org-bar ${isOrg?'visible':''}">
-          <span style="font-size:11px;color:var(--muted)">Visible to attendees</span>
-          <div style="display:flex;gap:6px">
-            <button class="sched-action-btn" onclick="downloadDoc(${i})">👁 Preview</button>
-            <button class="sched-action-btn danger" onclick="deleteDoc(${i})">🗑 Remove</button>
-          </div>
-        </div>
-      </div>`;
-    });
-  }
-
-  container.innerHTML = html;
-}
-
-function downloadDoc(idx) {
-  const key = `${currentLoc.key}-${idx}`;
-  downloadedDocs.add(key);
-  showToast('📄 Document opened!');
-  renderDownloads();
-}
-
-// ═══════════════════════════════════════════════
 // ORGANIZER PANEL
 // ═══════════════════════════════════════════════
 function openPanel() {
@@ -1477,159 +1237,8 @@ function closePanel() {
 }
 
 function closeAllPanels() {
-  ['org-panel','sched-panel','doc-panel'].forEach(id => {
-    document.getElementById(id).classList.remove('open');
-  });
+  document.getElementById('org-panel').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
-}
-
-// ═══════════════════════════════════════════════
-// SCHEDULE EDITING
-// ═══════════════════════════════════════════════
-function openSchedulePanel(idx) {
-  const panel = document.getElementById('sched-panel');
-  document.getElementById('sched-edit-idx').value = idx;
-
-  if (idx >= 0) {
-    // Edit mode — pre-fill fields
-    const item = currentLoc.schedule[idx];
-    document.getElementById('sched-panel-title').textContent = '✏️ Edit Schedule Item';
-    document.getElementById('sched-title').value = item.title;
-    document.getElementById('sched-start').value = item.start;
-    document.getElementById('sched-end').value = item.end || '';
-    document.getElementById('sched-cat').value = item.cat || '';
-    document.getElementById('sched-desc').value = item.desc || '';
-    document.getElementById('sched-save-btn').textContent = '💾 Save Changes';
-  } else {
-    // Add mode — clear fields
-    document.getElementById('sched-panel-title').textContent = '📅 Add Schedule Item';
-    document.getElementById('sched-title').value = '';
-    document.getElementById('sched-start').value = '';
-    document.getElementById('sched-end').value = '';
-    document.getElementById('sched-cat').value = '';
-    document.getElementById('sched-desc').value = '';
-    document.getElementById('sched-save-btn').textContent = '✅ Add to Schedule';
-  }
-
-  document.getElementById('sched-save-btn').style.background = currentLoc.accent;
-  panel.classList.add('open');
-  document.getElementById('overlay').classList.add('show');
-}
-
-function saveScheduleItem() {
-  const title = document.getElementById('sched-title').value.trim();
-  const start = document.getElementById('sched-start').value.trim();
-  if (!title || !start) { showToast('⚠️ Title and start time are required'); return; }
-
-  const item = {
-    title,
-    start,
-    end: document.getElementById('sched-end').value.trim() || null,
-    cat: document.getElementById('sched-cat').value.trim() || 'General',
-    desc: document.getElementById('sched-desc').value.trim() || null,
-  };
-
-  const idx = parseInt(document.getElementById('sched-edit-idx').value);
-  if (idx >= 0) {
-    currentLoc.schedule[idx] = item;
-    showToast('✅ Schedule item updated!');
-  } else {
-    currentLoc.schedule.push(item);
-    // Sort by start time (simple string sort works for 12hr format here)
-    currentLoc.schedule.sort((a, b) => {
-      const toMins = t => {
-        const [time, period] = t.split(' ');
-        let [h, m] = time.split(':').map(Number);
-        if (period === 'PM' && h !== 12) h += 12;
-        if (period === 'AM' && h === 12) h = 0;
-        return h * 60 + (m || 0);
-      };
-      return toMins(a.start) - toMins(b.start);
-    });
-    showToast('✅ Item added to schedule!');
-  }
-
-  closeAllPanels();
-  scheduleFilter = null;
-  renderSchedule();
-}
-
-function deleteScheduleItem(idx) {
-  const item = currentLoc.schedule[idx];
-  if (!confirm(`Delete "${item.title}" from the schedule?`)) return;
-  currentLoc.schedule.splice(idx, 1);
-  renderSchedule();
-  showToast('🗑 Item removed from schedule');
-}
-
-// ═══════════════════════════════════════════════
-// DOCUMENT UPLOAD
-// ═══════════════════════════════════════════════
-let selectedFile = null;
-
-function openDocPanel() {
-  // Reset form
-  document.getElementById('doc-title-input').value = '';
-  document.getElementById('doc-desc-input').value = '';
-  document.getElementById('doc-tag-input').value = '';
-  document.getElementById('upload-icon').textContent = '📎';
-  document.getElementById('upload-text').textContent = 'Tap to choose a file';
-  document.getElementById('upload-sub').textContent = 'PDF, Word, Excel, or Image';
-  document.getElementById('doc-save-btn').style.background = currentLoc.accent;
-  selectedFile = null;
-
-  document.getElementById('doc-panel').classList.add('open');
-  document.getElementById('overlay').classList.add('show');
-}
-
-function handleFileSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
-  selectedFile = file;
-
-  // Show file info in drop zone
-  const ext = file.name.split('.').pop().toLowerCase();
-  const icons = { pdf:'📄', doc:'📝', docx:'📝', xlsx:'📊', png:'🖼️', jpg:'🖼️' };
-  document.getElementById('upload-icon').textContent = icons[ext] || '📎';
-  document.getElementById('upload-text').textContent = file.name;
-  document.getElementById('upload-sub').textContent = `${(file.size/1024).toFixed(0)} KB · ${ext.toUpperCase()}`;
-
-  // Auto-fill title from filename if empty
-  const titleInput = document.getElementById('doc-title-input');
-  if (!titleInput.value) {
-    titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  }
-}
-
-function saveDocument() {
-  const title = document.getElementById('doc-title-input').value.trim();
-  if (!title) { showToast('⚠️ Enter a document title'); return; }
-  if (!selectedFile) { showToast('⚠️ Choose a file first'); return; }
-
-  const ext = selectedFile.name.split('.').pop().toLowerCase();
-  const icons = { pdf:'📄', doc:'📝', docx:'📝', xlsx:'📊', png:'🖼️', jpg:'🖼️' };
-  const tag = document.getElementById('doc-tag-input').value.trim() || 'Document';
-
-  currentLoc.docs.push({
-    title,
-    desc: document.getElementById('doc-desc-input').value.trim(),
-    icon: icons[ext] || '📎',
-    tag,
-    tag2: ext.toUpperCase(),
-    fileName: selectedFile.name,
-  });
-
-  closeAllPanels();
-  renderDownloads();
-  showToast(`📤 "${title}" added to downloads!`);
-}
-
-function deleteDoc(idx) {
-  const doc = currentLoc.docs[idx];
-  if (!confirm(`Remove "${doc.title}" from downloads?`)) return;
-  currentLoc.docs.splice(idx, 1);
-  renderDownloads();
-  showToast('🗑 Document removed');
 }
 
 function updateEntryActivity() {
@@ -1700,34 +1309,14 @@ function setRole(role) {
   document.getElementById('role-attendee').classList.toggle('active', role==='attendee');
   document.getElementById('role-organizer').classList.toggle('active', role==='organizer');
   updateOrgFab();
-  if (currentLoc) {
-    renderLeaderboard();
-    renderSchedule();
-    renderDownloads();
-  }
+  if (currentLoc) renderLeaderboard();
 }
 
 function updateOrgFab() {
-  const isOrg = currentRole === 'organizer';
-  const accent = currentLoc ? currentLoc.accent : '#2563eb';
-
-  const resultFab = document.getElementById('org-fab');
-  const schedFab  = document.getElementById('sched-fab');
-  const docFab    = document.getElementById('doc-fab');
-
-  // Result FAB: organizer + leaderboard page
-  const showResult = isOrg && currentPage === 'leaderboard' && !!currentLoc;
-  resultFab.classList.toggle('visible', showResult);
-
-  // Schedule FAB: organizer + schedule page
-  const showSched = isOrg && currentPage === 'schedule' && !!currentLoc;
-  schedFab.classList.toggle('visible', showSched);
-
-  // Doc FAB: organizer + downloads page
-  const showDoc = isOrg && currentPage === 'downloads' && !!currentLoc;
-  docFab.classList.toggle('visible', showDoc);
-
-  [resultFab, schedFab, docFab].forEach(b => { if (currentLoc) b.style.background = accent; });
+  const fab = document.getElementById('org-fab');
+  const show = currentRole === 'organizer' && !!currentLoc;
+  fab.classList.toggle('visible', show);
+  if (currentLoc) fab.style.background = currentLoc.accent;
 }
 
 // ═══════════════════════════════════════════════
